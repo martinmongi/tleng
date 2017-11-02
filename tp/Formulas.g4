@@ -4,19 +4,22 @@ grammar Formulas ;
  * Parser Rules
  */
  
-formula         : CHAR
-                | '{' formula '}'
-                | '(' formula ')'
-                | formula '^' formula
-                | formula '_' formula
-                | formula '^' formula '_' formula
-                | formula '_' formula '^' formula // aca deberiamos ocuparnos de que no son asociativos los indices
-                | formula formula
-                | formula '/' formula
+formula         : expression NEWLINE ;
+
+expression         : CHAR
+                | '{' expression '}'
+                | '(' expression ')'
+                | expression '^' expression
+                | expression '_' expression
+                | expression '^' expression '_' expression
+                | expression '_' expression '^' expression // aca deberiamos ocuparnos de que no son asociativos los indices
+                | expression expression
+                | expression '/' expression
                 ;
 
 /*
  * Lexer Rules
  */
 
-CHAR    : ~('^' | '_' | '/' | '{' | '}' | '(' | ')') ;
+NEWLINE : '\n'+ ;
+CHAR    : ~('^' | '_' | '/' | '{' | '}' | '(' | ')' | '\n') ;
