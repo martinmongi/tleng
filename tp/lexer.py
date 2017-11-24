@@ -1,7 +1,7 @@
 import ply.lex as lex
 
 tokens = (
-    'CHARACTER',
+    'CHAR',
     'CARET',
     'UNDERSCORE',
     'SLASH',
@@ -10,14 +10,14 @@ tokens = (
     'LPAREN',
     'RPAREN'
 )
-t_CHARACTER = r'[^\^_/\(\)\{\}]+'
+t_CHAR = r'[^\^_/\(\)\{\}]'
 t_CARET = r'\^'
 t_UNDERSCORE = r'_'
 t_SLASH = r'/'
-t_LBRACE = r'\('
-t_RBRACE = r'\)'
-t_LPAREN = r'\{'
-t_RPAREN = r'\}'
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_LBRACE = r'\{'
+t_RBRACE = r'\}'
 
 def t_newline(t):
     r'\n+'
@@ -30,15 +30,3 @@ def t_error(t):
     t.lexer.skip(1)
 
 lexer = lex.lex()
-
-data = '(A^BC^D/E^F_G+H)-I'
-
-# Give the lexer some input
-lexer.input(data)
-
-# Tokenize
-while True:
-    tok = lexer.token()
-    if not tok:
-        break      # No more input
-    print(tok)

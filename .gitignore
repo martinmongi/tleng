@@ -1,1 +1,3 @@
+*.out
 *.pyc
+tp/parsetab.py

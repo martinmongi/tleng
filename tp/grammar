@@ -11,4 +11,4 @@ indexed_term : factor ^ factor _ factor
 
 factor : ( expression )
        | { expression }
-       | CHARACTER
+       | CHARS
