@@ -10,7 +10,7 @@ tokens = (
     'LPAREN',
     'RPAREN'
 )
-t_CHARACTER = r'[^\^_/\(\)\{\}]'
+t_CHARACTER = r'[^\^_/\(\)\{\}]+'
 t_CARET = r'\^'
 t_UNDERSCORE = r'_'
 t_SLASH = r'/'

@@ -1,0 +1,14 @@
+expression : expression / concatenation
+           | concatenation
+
+concatenation : concatenation indexed_term
+              | indexed_term
+
+indexed_term : factor ^ factor _ factor
+               factor _ factor ^ factor
+               factor ^ factor
+               factor _ factor
+
+factor : ( expression )
+       | { expression }
+       | CHARACTER
