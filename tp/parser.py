@@ -14,7 +14,7 @@ def p_expression_concatenation(p):
 
 def p_concat_1(p):
     'concat : concat term'
-    p[0] = "[" + p[1] + " concat " + p[2] + "]"
+    p[0] = p[1] + p[2]
 
 def p_concat_2(p):
     'concat : term'
