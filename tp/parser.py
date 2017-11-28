@@ -4,7 +4,12 @@ import ply.yacc as yacc
 from lexer import tokens
 
 
-class ConcatenationOp:
+class Operation(object):
+    def render(self, fout, x, y):
+        raise NotImplementedError('subclass responsibility')
+
+
+class ConcatenationOp(Operation):
     def __init__(self, child1, child2):
         self.value = child1.value + child2.value
         self.scale = max(child1.scale, child2.scale)
@@ -19,13 +24,17 @@ class ConcatenationOp:
                                 self.height,
                                 self.children))
 
+    def render(self, fout, x, y):
+        self.children[0].render(fout, x, y)
+        self.children[1].render(fout, x + self.children[0].width, y)
 
-class DivisionOp:
+
+class DivisionOp(Operation):
     def __init__(self, child1, child2):
         self.value = child1.value + child2.value
         self.scale = max(child1.scale, child2.scale)
         self.width = max(child1.width, child2.width)
-        self.height = child1.height + child2.height + self.scale*.4
+        self.height = child1.height + child2.height + self.scale * .4
         self.children = [child1, child2]
 
     def __repr__(self):
@@ -35,8 +44,37 @@ class DivisionOp:
                                   self.height,
                                   self.children))
 
+    def render(self, fout, x, y):
+        self.children[0].render(fout, x, y)
+        fout.write('<line x1="' + str(x) +
+                   '" y1="' + str(y - self.scale * .6 + self.children[0].height) +
+                   '" x2="' + str(x + max(self.children[0].width, self.children[1].width)) +
+                   '" y2="' + str(y - self.scale * .6 + self.children[0].height) +
+                   '" stroke-width="0.03" stroke="black"/>\n')
+        self.children[1].render(fout, x, y + self.children[0].height + self.scale * .4)
 
-class CharLeaf:
+
+class CaretOp(Operation):
+    def __init__(self, child1, child2):
+        self.value = child1.value + child2.value
+        self.scale = max(child1.scale, child2.scale) * 0, 7
+        self.width = child1.width, child2.width
+        self.height = max(child1.height, child1.height * 0.45 + child2.height)
+        self.children = [child1, child2]
+
+    def __repr__(self):
+        return "Caret" + repr((self.value,
+                               self.scale,
+                               self.width,
+                               self.height,
+                               self.children))
+
+    def render(self, fout, x, y):
+        self.children[0].render(fout, x, y)
+        self.children[1].render(fout, x + self.children[0].width, y - self.children[1].height * 0.45)
+
+
+class CharLeaf(Operation):
     def __init__(self, c):
         self.value = c
         self.scale = 1.
@@ -49,6 +87,12 @@ class CharLeaf:
                               self.scale,
                               self.width,
                               self.height))
+
+    def render(self, fout, x, y):
+        fout.write('<text x="' + str(x * self.scale) +
+                   '" y="' + str(y * self.scale) +
+                   '" font-size="1">' + self.value +
+                   '</text>\n')
 
 
 start = 'expression'
@@ -70,9 +114,11 @@ def p_pass_through(p):
        term       : factor'''
     p[0] = p[1]
 
-# def p_term_1(p):
-#     'term : factor CARET factor'
-#     p[0] = "[" + p[1] + " super " + p[3] + "]"
+
+def p_term_1(p):
+    'term : factor CARET factor'
+    p[0] = CaretOp(p[1], p[3])
+
 
 # def p_term_2(p):
 #     'term : factor UNDERSCORE factor'
