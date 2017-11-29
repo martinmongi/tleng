@@ -45,21 +45,24 @@ class DivisionOp(Operation):
                                   self.children))
 
     def render(self, fout, x, y):
-        self.children[0].render(fout, x, y)
+        self.children[0].render(
+            fout, x + (self.width - self.children[0].width) / 2, y)
         fout.write('<line x1="' + str(x) +
                    '" y1="' + str(y - self.scale * .6 + self.children[0].height) +
                    '" x2="' + str(x + max(self.children[0].width, self.children[1].width)) +
                    '" y2="' + str(y - self.scale * .6 + self.children[0].height) +
                    '" stroke-width="0.03" stroke="black"/>\n')
-        self.children[1].render(fout, x, y + self.children[0].height + self.scale * .4)
+        self.children[1].render(
+            fout, x + (self.width - self.children[1].width) / 2,
+            y + self.children[0].height + self.scale * .4)
 
 
 class CaretOp(Operation):
     def __init__(self, child1, child2):
         self.value = child1.value + child2.value
-        self.scale = max(child1.scale, child2.scale) * 0, 7
+        self.scale = max(child1.scale, child2.scale) * .7
         self.width = child1.width, child2.width
-        self.height = max(child1.height, child1.height * 0.45 + child2.height)
+        self.height = max(child1.height, child1.height * .45 + child2.height)
         self.children = [child1, child2]
 
     def __repr__(self):
@@ -71,7 +74,8 @@ class CaretOp(Operation):
 
     def render(self, fout, x, y):
         self.children[0].render(fout, x, y)
-        self.children[1].render(fout, x + self.children[0].width, y - self.children[1].height * 0.45)
+        self.children[1].render(
+            fout, x + self.children[0].width, y - self.children[1].height * 0.45)
 
 
 class CharLeaf(Operation):
