@@ -8,95 +8,185 @@ class Operation(object):
     def render(self, fout, x, y):
         raise NotImplementedError('subclass responsibility')
 
+class EmptyLeaf(Operation):
+    def __init__(self):
+        self.value = ""
+        self.scale = self.width = self.height = self.pos_x = self.pos_y = 0
+
+    def propagate_scale(self, scale):
+        pass
+
+    def synthesize_sizes(self):
+        pass
+
+    def propagate_position(self, x, y):
+        pass
+
+    def render(self, fout):
+        pass
+
+    def __repr__(self):
+        return "EmptyLeaf"
+
+
+class CharLeaf(Operation):
+    def __init__(self, c):
+        self.value = c
+        self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
+
+    def propagate_scale(self, scale):
+        self.scale = scale
+
+    def synthesize_sizes(self):
+        self.width = self.scale * .6
+        self.height = self.scale
+
+    def propagate_position(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
+
+    def render(self, fout):
+        fout.write('<text x="' + str(self.pos_x) +
+                   '" y="' + str(self.pos_y) +
+                   '" font-size="' + str(self.scale) +
+                   '">' + self.value +
+                   '</text>\n')
+
+    def __repr__(self):
+        return "Leaf" + repr((self.value,
+                              self.scale,
+                              self.width,
+                              self.height,
+                              self.pos_x,
+                              self.pos_y))
+
 
 class ConcatenationOp(Operation):
     def __init__(self, child1, child2):
         self.value = child1.value + child2.value
-        self.scale = max(child1.scale, child2.scale)
-        self.width = child1.width + child2.width
-        self.height = max(child1.height, child2.height)
         self.children = [child1, child2]
+        self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
+
+    def propagate_scale(self, scale):
+        self.scale = scale
+        self.children[0].propagate_scale(scale)
+        self.children[1].propagate_scale(scale)
+
+    def synthesize_sizes(self):
+        self.children[0].synthesize_sizes()
+        self.children[1].synthesize_sizes()
+        self.width = self.children[0].width + self.children[1].width
+        self.height = max(self.children[0].height, self.children[1].height)
+
+    def propagate_position(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
+        self.children[0].propagate_position(x, y)
+        self.children[1].propagate_position(x + self.children[0].width, y)
+
+    def render(self, fout):
+        self.children[0].render(fout)
+        self.children[1].render(fout)
 
     def __repr__(self):
         return "Concat" + repr((self.value,
                                 self.scale,
                                 self.width,
                                 self.height,
+                                self.pos_x,
+                                self.pos_y,
                                 self.children))
-
-    def render(self, fout, x, y):
-        self.children[0].render(fout, x, y)
-        self.children[1].render(fout, x + self.children[0].width, y)
 
 
 class DivisionOp(Operation):
     def __init__(self, child1, child2):
-        self.value = child1.value + child2.value
-        self.scale = max(child1.scale, child2.scale)
-        self.width = max(child1.width, child2.width)
-        self.height = child1.height + child2.height + self.scale * .4
+        self.value = child1.value + '/' + child2.value
         self.children = [child1, child2]
+        self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
+
+    def propagate_scale(self, scale):
+        self.scale = scale
+        self.children[0].propagate_scale(scale)
+        self.children[1].propagate_scale(scale)
+
+    def synthesize_sizes(self):
+        self.children[0].synthesize_sizes()
+        self.children[1].synthesize_sizes()
+        self.width = max(self.children[0].width, self.children[1].width)
+        self.height = self.children[0].height + \
+            self.children[1].height + self.scale * .4
+
+    def propagate_position(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
+        self.children[0].propagate_position(
+            x + (self.width - self.children[0].width) / 2, y)
+        self.children[1].propagate_position(
+            x + (self.width - self.children[1].width) / 2,  y + self.children[0].height + self.scale * .4)
+
+    def render(self, fout):
+        self.children[0].render(fout)
+        fout.write('<line x1="' + str(self.pos_x) +
+                   '" y1="' + str(self.pos_y - self.scale * .6 + self.children[0].height) +
+                   '" x2="' + str(self.pos_x + max(self.children[0].width, self.children[1].width)) +
+                   '" y2="' + str(self.pos_y - self.scale * .6 + self.children[0].height) +
+                   '" stroke-width="0.03" stroke="black"/>\n')
+        self.children[1].render(fout)
 
     def __repr__(self):
-        return "Division" + repr((self.value,
+        return "Div" + repr((self.value,
+                             self.scale,
+                             self.width,
+                             self.height,
+                             self.pos_x,
+                             self.pos_y,
+                             self.children))
+
+
+class SuperSubScriptOp(Operation):
+    def __init__(self, script, superscript=None, subscript=None):
+        superscript = superscript or EmptyLeaf()
+        subscript = subscript or EmptyLeaf()
+        self.value = script.value + '^' + superscript.value + '_' + subscript.value
+        self.script = script
+        self.superscript = superscript
+        self.subscript = subscript
+        self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
+
+    def propagate_scale(self, scale):
+        self.scale = scale
+        self.script.propagate_scale(scale)
+        self.superscript.propagate_scale(scale * .7)
+        self.subscript.propagate_scale(scale * .7)
+
+    def synthesize_sizes(self):
+        self.script.synthesize_sizes()
+        self.superscript.synthesize_sizes()
+        self.subscript.synthesize_sizes()
+        self.width = self.script.width + max(self.superscript.width, self.subscript.width)
+        self.height = max(self.script.height, self.superscript.height + self.superscript.height)
+    
+    def propagate_position(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
+        self.script.propagate_position(x, y)
+        self.superscript.propagate_position(
+            x + self.script.width, y - self.superscript.height * 0.45 * self.scale)
+        self.subscript.propagate_position(
+            x + self.script.width, y + self.subscript.height * 0.2 * self.scale)
+
+    def render(self, fout):
+        self.script.render(fout)
+        self.superscript.render(fout)
+        self.subscript.render(fout)
+
+    def __repr__(self):
+        return "SuperSub" + repr((self.value,
                                   self.scale,
                                   self.width,
                                   self.height,
-                                  self.children))
+                                  [self.script, self.superscript, self.subscript]))
 
-    def render(self, fout, x, y):
-        self.children[0].render(
-            fout, x + (self.width - self.children[0].width) / 2, y)
-        fout.write('<line x1="' + str(x) +
-                   '" y1="' + str(y - self.scale * .6 + self.children[0].height) +
-                   '" x2="' + str(x + max(self.children[0].width, self.children[1].width)) +
-                   '" y2="' + str(y - self.scale * .6 + self.children[0].height) +
-                   '" stroke-width="0.03" stroke="black"/>\n')
-        self.children[1].render(
-            fout, x + (self.width - self.children[1].width) / 2,
-            y + self.children[0].height + self.scale * .4)
-
-
-class CaretOp(Operation):
-    def __init__(self, child1, child2):
-        self.value = child1.value + child2.value
-        self.scale = max(child1.scale, child2.scale) * .7
-        self.width = child1.width, child2.width
-        self.height = max(child1.height, child1.height * .45 + child2.height)
-        self.children = [child1, child2]
-
-    def __repr__(self):
-        return "Caret" + repr((self.value,
-                               self.scale,
-                               self.width,
-                               self.height,
-                               self.children))
-
-    def render(self, fout, x, y):
-        self.children[0].render(fout, x, y)
-        self.children[1].render(
-            fout, x + self.children[0].width, y - self.children[1].height * 0.45)
-
-
-class CharLeaf(Operation):
-    def __init__(self, c):
-        self.value = c
-        self.scale = 1.
-        self.width = .6
-        self.height = 1
-        self.children = []
-
-    def __repr__(self):
-        return "Leaf" + repr((self.value,
-                              self.scale,
-                              self.width,
-                              self.height))
-
-    def render(self, fout, x, y):
-        fout.write('<text x="' + str(x * self.scale) +
-                   '" y="' + str(y * self.scale) +
-                   '" font-size="1">' + self.value +
-                   '</text>\n')
 
 
 start = 'expression'
@@ -121,20 +211,20 @@ def p_pass_through(p):
 
 def p_term_1(p):
     'term : factor CARET factor'
-    p[0] = CaretOp(p[1], p[3])
+    p[0] = SuperSubScriptOp(p[1], p[3], None)
 
 
-# def p_term_2(p):
-#     'term : factor UNDERSCORE factor'
-#     p[0] = "[" + p[1] + " sub " + p[3] + "]"
+def p_term_2(p):
+    'term : factor UNDERSCORE factor'
+    p[0] = SuperSubScriptOp(p[1], None, p[3])
 
-# def p_term_3(p):
-#     'term : factor CARET factor UNDERSCORE factor'
-#     p[0] = "[" + p[1] + " super " + p[3] + " sub " + p[5] + "]"
+def p_term_3(p):
+    'term : factor CARET factor UNDERSCORE factor'
+    p[0] = SuperSubScriptOp(p[1], p[3], p[5])
 
-# def p_term_4(p):
-#     'term : factor UNDERSCORE factor CARET factor'
-#     p[0] = "[" + p[1] + " sub " + p[3] + " super " + p[5] + "]"
+def p_term_4(p):
+    'term : factor UNDERSCORE factor CARET factor'
+    p[0] = SuperSubScriptOp(p[1], p[5], p[3])
 
 def p_factor_paren(p):
     'factor : LPAREN expression RPAREN'
@@ -165,4 +255,3 @@ except EOFError:
 if not s:
     exit()
 result = parser.parse(s)
-print(result)
