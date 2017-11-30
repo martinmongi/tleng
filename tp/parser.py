@@ -28,7 +28,6 @@ class EmptyLeaf(Operation):
     def __repr__(self):
         return "EmptyLeaf"
 
-
 class CharLeaf(Operation):
     def __init__(self, c):
         self.value = c
@@ -59,7 +58,6 @@ class CharLeaf(Operation):
                               self.height,
                               self.pos_x,
                               self.pos_y))
-
 
 class ConcatenationOp(Operation):
     def __init__(self, child1, child2):
@@ -97,7 +95,6 @@ class ConcatenationOp(Operation):
                                 self.pos_y,
                                 self.children))
 
-
 class DivisionOp(Operation):
     def __init__(self, child1, child2):
         self.value = child1.value + '/' + child2.value
@@ -114,23 +111,28 @@ class DivisionOp(Operation):
         self.children[1].synthesize_sizes()
         self.width = max(self.children[0].width, self.children[1].width)
         self.height = self.children[0].height + \
-            self.children[1].height + self.scale * .4
+            self.children[1].height
 
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
+        self.line_pos_y = self.pos_y - self.scale * .28
+        up_y = self.line_pos_y - self.scale * .2
+        down_y = self.line_pos_y + self.scale * .8
+        print(up_y, self.line_pos_y, down_y)
         self.children[0].propagate_position(
-            x + (self.width - self.children[0].width) / 2, y)
+            x + (self.width - self.children[0].width) / 2, up_y)
         self.children[1].propagate_position(
-            x + (self.width - self.children[1].width) / 2,  y + self.children[0].height + self.scale * .4)
+            x + (self.width - self.children[1].width) / 2, down_y)
 
     def render(self, fout):
         self.children[0].render(fout)
         fout.write('<line x1="' + str(self.pos_x) +
-                   '" y1="' + str(self.pos_y - self.scale * .6 + self.children[0].height) +
+                   '" y1="' + str(self.line_pos_y) +
                    '" x2="' + str(self.pos_x + max(self.children[0].width, self.children[1].width)) +
-                   '" y2="' + str(self.pos_y - self.scale * .6 + self.children[0].height) +
-                   '" stroke-width="0.03" stroke="black"/>\n')
+                   '" y2="' + str(self.line_pos_y) +
+                   '" stroke-width="' + str(self.scale*0.06) + 
+                   '" stroke="black"/>\n')
         self.children[1].render(fout)
 
     def __repr__(self):
@@ -141,7 +143,6 @@ class DivisionOp(Operation):
                              self.pos_x,
                              self.pos_y,
                              self.children))
-
 
 class SuperSubScriptOp(Operation):
     def __init__(self, script, superscript=None, subscript=None):
@@ -187,7 +188,30 @@ class SuperSubScriptOp(Operation):
                                   self.height,
                                   [self.script, self.superscript, self.subscript]))
 
-
+# class ParenthesesOp(Operation):
+#     def __init__(self, child):
+#         self.value = '(' + child.value + ')'
+#         self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
+#         self.child = child
+    
+#     def propagate_scale(self, scale):
+#         self.scale = scale
+#         self.child.propagate_scale(scale)
+    
+#     def synthesize_sizes(self):
+#         self.child.synthesize_sizes()
+#         self.width = self.child.width + self.scale * 2
+#         self.height = self.child.height
+    
+#     def propagate_position(self, x, y):
+#         self.pos_x = x
+#         self.pos_y = y
+#         self.child.propagate_position(x + self.scale, y)
+    
+#     def render(self, fout):
+#         fout.write(
+#             '< text x="0" y="0" font - size="1" transform="translate(2.82, 1.36875) scale(1,2.475)" > ) < /text>')
+#         self.child.render(fout)
 
 start = 'expression'
 
@@ -248,10 +272,3 @@ def p_error(p):
 # Build the parser
 parser = yacc.yacc()
 
-try:
-    s = raw_input(u'Expresion a parsear: ')
-except EOFError:
-    exit()
-if not s:
-    exit()
-result = parser.parse(s)

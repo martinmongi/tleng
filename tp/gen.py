@@ -1,17 +1,30 @@
-from parser import result
+from parser import parser
+import argparse
+
+argparser = argparse.ArgumentParser(description='Typeset lovely formulas')
+argparser.add_argument('string_to_parse')
+argparser.add_argument('output_filename')
+
+args = argparser.parse_args()
+
+result = parser.parse(vars(args)['string_to_parse'])
 
 
-f = open('test.svg', 'w')
+f = open(vars(args)['output_filename'], 'w')
 f.write('<?xml version="1.0"?>\n'
         '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" >\n'
-        '<g transform="scale(40) translate(0, .62)" font-family="Courier" >\n')
+        '<g transform="scale(40) translate(10,10)" font-family="Courier" >\n'
+        '<line x1="0" y1="-100" x2="0" y2="100" stroke-width="0.01" stroke="black"/>\n'
+        '<line x1="-100" y1="0" x2="100" y2="0" stroke-width="0.02" stroke="black"/>\n'
+        '<line x1="-100" y1="-1" x2="100" y2="-1" stroke-width="0.01" stroke="black"/>\n'
+        '<line x1="-100" y1="1" x2="100" y2="1" stroke-width="0.01" stroke="black"/>\n')
 
 print(result)
 result.propagate_scale(1)
 print(result)
 result.synthesize_sizes()
 print(result)
-result.propagate_position(10,10)
+result.propagate_position(0,0)
 print(result)
 result.render(f)
 
