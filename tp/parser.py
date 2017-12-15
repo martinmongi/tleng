@@ -5,8 +5,12 @@ from lexer import tokens
 
 
 class Operation(object):
-    def render(self, fout, x, y):
+    def render(self, fout):
         raise NotImplementedError('subclass responsibility')
+
+    def amount_of_divitions_included(self):
+        raise NotImplementedError('subclass responsibility')
+
 
 class EmptyLeaf(Operation):
     def __init__(self):
@@ -22,11 +26,15 @@ class EmptyLeaf(Operation):
     def propagate_position(self, x, y):
         pass
 
+    def amount_of_divitions_included(self):
+        return 0
+
     def render(self, fout):
         pass
 
     def __repr__(self):
         return "EmptyLeaf"
+
 
 class CharLeaf(Operation):
     def __init__(self, c):
@@ -51,6 +59,9 @@ class CharLeaf(Operation):
                    '">' + self.value +
                    '</text>\n')
 
+    def amount_of_divitions_included(self):
+        return 0
+
     def __repr__(self):
         return "Leaf" + repr((self.value,
                               self.scale,
@@ -58,6 +69,7 @@ class CharLeaf(Operation):
                               self.height,
                               self.pos_x,
                               self.pos_y))
+
 
 class ConcatenationOp(Operation):
     def __init__(self, child1, child2):
@@ -86,6 +98,9 @@ class ConcatenationOp(Operation):
         self.children[0].render(fout)
         self.children[1].render(fout)
 
+    def amount_of_divitions_included(self):
+        return self.children[0].amount_of_divitions_included() + self.children[1].amount_of_divitions_included()
+
     def __repr__(self):
         return "Concat" + repr((self.value,
                                 self.scale,
@@ -94,6 +109,7 @@ class ConcatenationOp(Operation):
                                 self.pos_x,
                                 self.pos_y,
                                 self.children))
+
 
 class DivisionOp(Operation):
     def __init__(self, child1, child2):
@@ -111,7 +127,7 @@ class DivisionOp(Operation):
         self.children[1].synthesize_sizes()
         self.width = max(self.children[0].width, self.children[1].width)
         self.height = self.children[0].height + \
-            self.children[1].height
+                      self.children[1].height
 
     def propagate_position(self, x, y):
         self.pos_x = x
@@ -131,9 +147,12 @@ class DivisionOp(Operation):
                    '" y1="' + str(self.line_pos_y) +
                    '" x2="' + str(self.pos_x + max(self.children[0].width, self.children[1].width)) +
                    '" y2="' + str(self.line_pos_y) +
-                   '" stroke-width="' + str(self.scale*0.06) + 
+                   '" stroke-width="' + str(self.scale * 0.06) +
                    '" stroke="black"/>\n')
         self.children[1].render(fout)
+
+    def amount_of_divitions_included(self):
+        return 1 + self.children[0].amount_of_divitions_included() + self.children[1].amount_of_divitions_included()
 
     def __repr__(self):
         return "Div" + repr((self.value,
@@ -143,6 +162,7 @@ class DivisionOp(Operation):
                              self.pos_x,
                              self.pos_y,
                              self.children))
+
 
 class SuperSubScriptOp(Operation):
     def __init__(self, script, superscript=None, subscript=None):
@@ -166,7 +186,7 @@ class SuperSubScriptOp(Operation):
         self.subscript.synthesize_sizes()
         self.width = self.script.width + max(self.superscript.width, self.subscript.width)
         self.height = max(self.script.height, self.superscript.height + self.superscript.height)
-    
+
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
@@ -181,6 +201,9 @@ class SuperSubScriptOp(Operation):
         self.superscript.render(fout)
         self.subscript.render(fout)
 
+    def amount_of_divitions_included(self):
+        return 0
+
     def __repr__(self):
         return "SuperSub" + repr((self.value,
                                   self.scale,
@@ -188,26 +211,75 @@ class SuperSubScriptOp(Operation):
                                   self.height,
                                   [self.script, self.superscript, self.subscript]))
 
+
+class ParenthesesOp(Operation):
+    def __init__(self, child1):
+        self.children = [child1]
+        self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
+
+    def propagate_scale(self, scale):
+        self.children[0].propagate_scale(scale)
+        self.scale = self.calculate_parenthesis_scale(self.children[0])
+
+    def synthesize_sizes(self):
+        self.children[0].synthesize_sizes()
+        self.width = self.children[0].width
+        self.height = self.children[0].height
+
+    def propagate_position(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
+        self.children[0].propagate_position(x, y)
+
+    def render(self, fout):
+        fout.write('<text x="' + str(self.pos_x) +
+                   '" y="' + str(self.pos_y) +
+                   '" font-size="' + str(self.scale) +
+                   '">' + '(' +
+                   '</text>\n')
+        self.children[0].render(fout)
+        fout.write('<text x="' + str(self.pos_x + self.children[0].width) +
+                   '" y="' + str(self.pos_y) +
+                   '" font-size="' + str(self.scale) +
+                   '">' + ')' +
+                   '</text>\n')
+
+    def amount_of_divitions_included(self):
+        return self.children[0].amount_of_divitions_included()
+
+    def __repr__(self):
+        return "Parentheses" + repr((self.scale,
+                                     self.width,
+                                     self.height,
+                                     self.pos_x,
+                                     self.pos_y,
+                                     self.children))
+
+    def calculate_parenthesis_scale(self, child):
+        amount_of_divitions_included = child.amount_of_divitions_included()
+        return amount_of_divitions_included * 1.7
+
+
 # class ParenthesesOp(Operation):
 #     def __init__(self, child):
 #         self.value = '(' + child.value + ')'
 #         self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
 #         self.child = child
-    
+
 #     def propagate_scale(self, scale):
 #         self.scale = scale
 #         self.child.propagate_scale(scale)
-    
+
 #     def synthesize_sizes(self):
 #         self.child.synthesize_sizes()
 #         self.width = self.child.width + self.scale * 2
 #         self.height = self.child.height
-    
+
 #     def propagate_position(self, x, y):
 #         self.pos_x = x
 #         self.pos_y = y
 #         self.child.propagate_position(x + self.scale, y)
-    
+
 #     def render(self, fout):
 #         fout.write(
 #             '< text x="0" y="0" font - size="1" transform="translate(2.82, 1.36875) scale(1,2.475)" > ) < /text>')
@@ -242,17 +314,21 @@ def p_term_2(p):
     'term : factor UNDERSCORE factor'
     p[0] = SuperSubScriptOp(p[1], None, p[3])
 
+
 def p_term_3(p):
     'term : factor CARET factor UNDERSCORE factor'
     p[0] = SuperSubScriptOp(p[1], p[3], p[5])
+
 
 def p_term_4(p):
     'term : factor UNDERSCORE factor CARET factor'
     p[0] = SuperSubScriptOp(p[1], p[5], p[3])
 
+
 def p_factor_paren(p):
     'factor : LPAREN expression RPAREN'
-    p[0] = ConcatenationOp(ConcatenationOp(CharLeaf("("), p[2]), CharLeaf(")"))
+    p[0] = ParenthesesOp(p[2])
+    # p[0] = ConcatenationOp(ConcatenationOp(CharLeaf("("), p[2]), CharLeaf(")"))
 
 
 def p_factor_brace(p):
@@ -271,4 +347,3 @@ def p_error(p):
 
 # Build the parser
 parser = yacc.yacc()
-
