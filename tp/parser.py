@@ -342,7 +342,6 @@ def p_term_4(p):
 def p_factor_paren(p):
     'factor : LPAREN expression RPAREN'
     p[0] = ParenthesesOp(p[2])
-    # p[0] = ConcatenationOp(ConcatenationOp(CharLeaf("("), p[2]), CharLeaf(")"))
 
 
 def p_factor_brace(p):
