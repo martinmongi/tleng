@@ -17,6 +17,12 @@ class Operation(object):
     def propagate_scale(self, scale):
         raise NotImplementedError('subclass responsibility')
 
+    def how_far_up_should_i_go(self, scale):
+        return scale
+
+    def how_far_down_should_i_go(self, scale):
+        return 1.5 * scale
+
 
 class EmptyLeaf(Operation):
     def __init__(self):
@@ -68,6 +74,12 @@ class CharLeaf(Operation):
     def amount_of_divitions_included(self):
         return 0
 
+    def how_far_up_should_i_go(self, scale):
+        return scale * 0.3
+
+    def how_far_down_should_i_go(self, scale):
+        return scale * 0.8
+
     def __repr__(self):
         return "Leaf" + repr((self.value,
                               self.scale,
@@ -107,6 +119,12 @@ class ConcatenationOp(Operation):
     def amount_of_divitions_included(self):
         return self.children[0].amount_of_divitions_included() + self.children[1].amount_of_divitions_included()
 
+    def how_far_up_should_i_go(self, scale):
+        return scale * 0.3
+
+    def how_far_down_should_i_go(self, scale):
+        return scale * 0.8
+
     def __repr__(self):
         return "Concat" + repr((self.value,
                                 self.scale,
@@ -132,20 +150,25 @@ class DivisionOp(Operation):
         self.children[0].synthesize_sizes()
         self.children[1].synthesize_sizes()
         self.width = max(self.children[0].width, self.children[1].width)
-        self.height = self.children[0].height + \
-                      self.children[1].height
+        self.height = self.children[0].height + self.children[1].height
 
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
         self.line_pos_y = self.pos_y - self.scale * .28
-        up_y = self.line_pos_y - self.scale * .2
-        down_y = self.line_pos_y + self.scale * .8
+        up_y = self.line_pos_y - self.numerator_position_to_propagate()
+        down_y = self.line_pos_y + self.denominator_position_to_propagate()
         print(up_y, self.line_pos_y, down_y)
         self.children[0].propagate_position(
             x + (self.width - self.children[0].width) / 2, up_y)
         self.children[1].propagate_position(
             x + (self.width - self.children[1].width) / 2, down_y)
+
+    def denominator_position_to_propagate(self):
+        return self.children[1].how_far_down_should_i_go(self.scale)
+
+    def numerator_position_to_propagate(self):
+        return self.children[0].how_far_up_should_i_go(self.scale)
 
     def render(self, fout):
         self.children[0].render(fout)
@@ -210,6 +233,12 @@ class SuperSubScriptOp(Operation):
     def amount_of_divitions_included(self):
         return 0
 
+    def how_far_up_should_i_go(self, scale):
+        return scale * 0.3
+
+    def how_far_down_should_i_go(self, scale):
+        return scale * 0.8
+
     def __repr__(self):
         return "SuperSub" + repr((self.value,
                                   self.scale,
@@ -269,32 +298,6 @@ class ParenthesesOp(Operation):
         if amount_of_divitions_included == 0:
             return 1
         return amount_of_divitions_included * 2.2
-
-
-# class ParenthesesOp(Operation):
-#     def __init__(self, child):
-#         self.value = '(' + child.value + ')'
-#         self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
-#         self.child = child
-
-#     def propagate_scale(self, scale):
-#         self.scale = scale
-#         self.child.propagate_scale(scale)
-
-#     def synthesize_sizes(self):
-#         self.child.synthesize_sizes()
-#         self.width = self.child.width + self.scale * 2
-#         self.height = self.child.height
-
-#     def propagate_position(self, x, y):
-#         self.pos_x = x
-#         self.pos_y = y
-#         self.child.propagate_position(x + self.scale, y)
-
-#     def render(self, fout):
-#         fout.write(
-#             '< text x="0" y="0" font - size="1" transform="translate(2.82, 1.36875) scale(1,2.475)" > ) < /text>')
-#         self.child.render(fout)
 
 start = 'expression'
 
