@@ -24,7 +24,7 @@ result.propagate_scale(1)
 print(result)
 result.synthesize_sizes()
 print(result)
-result.propagate_position(0,0)
+result.propagate_position(0, 0)
 print(result)
 result.render(f)
 
