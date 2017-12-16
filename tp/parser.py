@@ -23,9 +23,6 @@ class EmptyLeaf(Operation):
     def propagate_position(self, x, y):
         pass
 
-    def amount_of_divitions_included(self):
-        return 0
-
     def render(self, fout):
         pass
 
@@ -56,9 +53,6 @@ class CharLeaf(Operation):
                    '" font-size="' + str(self.scale) +
                    '">' + self.value +
                    '</text>\n')
-
-    def amount_of_divitions_included(self):
-        return 0
 
     def __repr__(self):
         return "Leaf" + repr((self.value,
@@ -101,9 +95,6 @@ class ConcatenationOp(Operation):
     def render(self, fout):
         self.children[0].render(fout)
         self.children[1].render(fout)
-
-    def amount_of_divitions_included(self):
-        return self.children[0].amount_of_divitions_included() + self.children[1].amount_of_divitions_included()
 
     def __repr__(self):
         return "Concat" + repr((self.value,
@@ -154,9 +145,6 @@ class DivisionOp(Operation):
                    '" stroke="black"/>\n')
         self.children[1].render(fout)
 
-    def amount_of_divitions_included(self):
-        return 1 + self.children[0].amount_of_divitions_included() + self.children[1].amount_of_divitions_included()
-
     def __repr__(self):
         return "Div" + repr((self.value,
                              self.scale,
@@ -187,8 +175,10 @@ class SuperSubScriptOp(Operation):
         self.script.synthesize_sizes()
         self.superscript.synthesize_sizes()
         self.subscript.synthesize_sizes()
-        self.width = self.script.width + max(self.superscript.width, self.subscript.width)
-        self.height = max(self.script.height, self.superscript.height + self.superscript.height)
+        self.width = self.script.width + \
+            max(self.superscript.width, self.subscript.width)
+        self.height = max(self.script.height,
+                          self.superscript.height + self.superscript.height)
 
     def propagate_position(self, x, y):
         self.pos_x = x
@@ -204,9 +194,6 @@ class SuperSubScriptOp(Operation):
         self.superscript.render(fout)
         self.subscript.render(fout)
 
-    def amount_of_divitions_included(self):
-        return 0
-
     def __repr__(self):
         return "SuperSub" + repr((self.value,
                                   self.scale,
@@ -219,7 +206,7 @@ class ParenthesesOp(Operation):
     def __init__(self, child1):
         self.children = [child1]
         self.value = '(' + child1.value + ')'
-        self.scale = self.width = self.height = self.pos_x = self.pos_y = self.amount_of_divitions = -1
+        self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
 
     def propagate_scale(self, scale):
         self.children[0].propagate_scale(scale)
@@ -227,7 +214,7 @@ class ParenthesesOp(Operation):
 
     def synthesize_sizes(self):
         self.children[0].synthesize_sizes()
-        self.width = self.scale*1.2 + self.children[0].width
+        self.width = self.scale * 1.2 + self.children[0].width
         self.height = self.children[0].height
         self.div_line_offset = self.children[0].div_line_offset
 
@@ -245,10 +232,7 @@ class ParenthesesOp(Operation):
         fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
                    '" transform="translate(' + str(self.children[0].width + 0.6 * self.scale) +
                    ',' + str(self.pos_y + self.height * .85) +
-                   ') scale(1,' + str((self.height - self.scale*.4)/self.scale/.6) + ')">)</text>')
-
-    def amount_of_divitions_included(self):
-        return self.children[0].amount_of_divitions_included()
+                   ') scale(1,' + str((self.height - self.scale * .4) / self.scale / .6) + ')">)</text>')
 
     def __repr__(self):
         return "Parentheses" + repr((self.value,
@@ -257,14 +241,8 @@ class ParenthesesOp(Operation):
                                      self.height,
                                      self.pos_x,
                                      self.pos_y,
-                                     self.amount_of_divitions,
                                      self.children))
 
-    def calculate_amount_of_parentheses(self, child):
-        amount_of_divitions_included = child.amount_of_divitions_included()
-        if amount_of_divitions_included == 0:
-            return 1
-        return amount_of_divitions_included * 2.2
 
 start = 'expression'
 
