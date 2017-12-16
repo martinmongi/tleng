@@ -129,13 +129,13 @@ class DivisionOp(Operation):
         self.width = max(self.children[0].width, self.children[1].width)
         self.height = self.children[0].height + \
             self.children[1].height
-        self.div_line_offset = self.children[0].height
+        self.div_line_offset = self.children[0].height + self.scale * .15
 
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
-        up_y = self.pos_y
-        down_y = self.pos_y + self.div_line_offset
+        up_y = self.pos_y - self.scale * .15
+        down_y = self.pos_y + self.div_line_offset - self.scale * .15
         self.children[0].propagate_position(
             x + (self.width - self.children[0].width) / 2, up_y)
         self.children[1].propagate_position(
@@ -230,29 +230,28 @@ class ParenthesesOp(Operation):
     def propagate_scale(self, scale):
         self.children[0].propagate_scale(scale)
         self.scale = scale
-        self.amount_of_divitions = self.calculate_amount_of_parentheses(self.children[0])
 
     def synthesize_sizes(self):
         self.children[0].synthesize_sizes()
-        self.width = self.scale + self.children[0].width
-        # fixme: the height is not well calculated
+        self.width = self.scale*1.2 + self.children[0].width
         self.height = self.children[0].height
+        self.div_line_offset = self.children[0].div_line_offset
 
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
-        self.children[0].propagate_position(x + 0.5, y)
+        self.children[0].propagate_position(x + 0.6, y)
 
     def render(self, fout):
-        fout.write('<text x="' + str(self.pos_x) +
-                   '" y="' + str(self.pos_y) +
-                   '" font-size="' + str(self.scale) +
-                   '" transform="translate(0, 0) scale(1,' + str(self.amount_of_divitions) + ')">(</text>')
+        fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
+                   '" transform="translate(' + str(self.pos_x) +
+                   ',' + str(self.pos_y + self.height * .85) +
+                   ') scale(1,' + str((self.height - self.scale * .4) / self.scale / .6) + ')">(</text>')
         self.children[0].render(fout)
-        fout.write('<text x="' + str(self.pos_x + self.children[0].width + 0.5) +
-                   '" y="' + str(self.pos_y) +
-                   '" font-size="' + str(self.scale) +
-                   '" transform="translate(0, 0) scale(1,' + str(self.amount_of_divitions) + ')">)</text>')
+        fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
+                   '" transform="translate(' + str(self.children[0].width + 0.6 * self.scale) +
+                   ',' + str(self.pos_y + self.height * .85) +
+                   ') scale(1,' + str((self.height - self.scale*.4)/self.scale/.6) + ')">)</text>')
 
     def amount_of_divitions_included(self):
         return self.children[0].amount_of_divitions_included()
