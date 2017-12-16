@@ -215,7 +215,7 @@ class SuperSubScriptOp(Operation):
 class ParenthesesOp(Operation):
     def __init__(self, child1):
         self.children = [child1]
-        self.value = '('+ child1.value + ')'
+        self.value = '(' + child1.value + ')'
         self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
 
     def propagate_scale(self, scale):
@@ -224,7 +224,7 @@ class ParenthesesOp(Operation):
 
     def synthesize_sizes(self):
         self.children[0].synthesize_sizes()
-        self.width = 2 + self.children[0].width
+        self.width = 2 * self.scale + self.children[0].width
         # fixme: the height is not well calculated
         self.height = self.children[0].height
 
