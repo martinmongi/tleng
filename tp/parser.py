@@ -216,11 +216,12 @@ class ParenthesesOp(Operation):
     def __init__(self, child1):
         self.children = [child1]
         self.value = '(' + child1.value + ')'
-        self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
+        self.scale = self.width = self.height = self.pos_x = self.pos_y = self.amount_of_divitions = -1
 
     def propagate_scale(self, scale):
         self.children[0].propagate_scale(scale)
-        self.scale = self.calculate_parenthesis_scale(self.children[0])
+        self.scale = scale
+        self.amount_of_divitions = self.calculate_amount_of_parentheses(self.children[0])
 
     def synthesize_sizes(self):
         self.children[0].synthesize_sizes()
@@ -236,15 +237,13 @@ class ParenthesesOp(Operation):
     def render(self, fout):
         fout.write('<text x="' + str(self.pos_x) +
                    '" y="' + str(self.pos_y) +
-                   '" font-size="' + str(self.scale) +
-                   '">' + '(' +
-                   '</text>\n')
+                   '" font-size="' + "1" +
+                   '" transform="translate(0, 0) scale(1,' + str(self.amount_of_divitions) + ')">(</text>')
         self.children[0].render(fout)
         fout.write('<text x="' + str(self.pos_x + self.children[0].width + 1) +
                    '" y="' + str(self.pos_y) +
-                   '" font-size="' + str(self.scale) +
-                   '">' + ')' +
-                   '</text>\n')
+                   '" font-size="' + "1" +
+                   '" transform="translate(0, 0) scale(1,' + str(self.amount_of_divitions) + ')">)</text>')
 
     def amount_of_divitions_included(self):
         return self.children[0].amount_of_divitions_included()
@@ -256,13 +255,14 @@ class ParenthesesOp(Operation):
                                      self.height,
                                      self.pos_x,
                                      self.pos_y,
+                                     self.amount_of_divitions,
                                      self.children))
 
-    def calculate_parenthesis_scale(self, child):
+    def calculate_amount_of_parentheses(self, child):
         amount_of_divitions_included = child.amount_of_divitions_included()
         if amount_of_divitions_included == 0:
             return 1
-        return amount_of_divitions_included * 2
+        return amount_of_divitions_included * 2.2
 
 
 # class ParenthesesOp(Operation):
