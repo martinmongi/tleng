@@ -231,7 +231,7 @@ class ParenthesesOp(Operation):
 
     def synthesize_sizes(self):
         self.children[0].synthesize_sizes()
-        self.width = 2 * self.scale + self.children[0].width
+        self.width = self.scale + self.children[0].width
         # fixme: the height is not well calculated
         self.height = self.children[0].height
 
@@ -243,12 +243,12 @@ class ParenthesesOp(Operation):
     def render(self, fout):
         fout.write('<text x="' + str(self.pos_x) +
                    '" y="' + str(self.pos_y) +
-                   '" font-size="' + "1" +
+                   '" font-size="' + str(self.scale) +
                    '" transform="translate(0, 0) scale(1,' + str(self.amount_of_divitions) + ')">(</text>')
         self.children[0].render(fout)
         fout.write('<text x="' + str(self.pos_x + self.children[0].width + 0.5) +
                    '" y="' + str(self.pos_y) +
-                   '" font-size="' + "1" +
+                   '" font-size="' + str(self.scale) +
                    '" transform="translate(0, 0) scale(1,' + str(self.amount_of_divitions) + ')">)</text>')
 
     def amount_of_divitions_included(self):
