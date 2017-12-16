@@ -11,6 +11,12 @@ class Operation(object):
     def amount_of_divitions_included(self):
         raise NotImplementedError('subclass responsibility')
 
+    def synthesize_sizes(self):
+        raise NotImplementedError('subclass responsibility')
+
+    def propagate_scale(self, scale):
+        raise NotImplementedError('subclass responsibility')
+
 
 class EmptyLeaf(Operation):
     def __init__(self):
@@ -232,7 +238,7 @@ class ParenthesesOp(Operation):
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
-        self.children[0].propagate_position(x + 1, y)
+        self.children[0].propagate_position(x + 0.5, y)
 
     def render(self, fout):
         fout.write('<text x="' + str(self.pos_x) +
@@ -240,7 +246,7 @@ class ParenthesesOp(Operation):
                    '" font-size="' + "1" +
                    '" transform="translate(0, 0) scale(1,' + str(self.amount_of_divitions) + ')">(</text>')
         self.children[0].render(fout)
-        fout.write('<text x="' + str(self.pos_x + self.children[0].width + 1) +
+        fout.write('<text x="' + str(self.pos_x + self.children[0].width + 0.5) +
                    '" y="' + str(self.pos_y) +
                    '" font-size="' + "1" +
                    '" transform="translate(0, 0) scale(1,' + str(self.amount_of_divitions) + ')">)</text>')
