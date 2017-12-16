@@ -177,17 +177,18 @@ class SuperSubScriptOp(Operation):
         self.subscript.synthesize_sizes()
         self.width = self.script.width + \
             max(self.superscript.width, self.subscript.width)
-        self.height = max(self.script.height,
-                          self.superscript.height + self.superscript.height)
+
+        self.height = max(self.script.height * .55 + self.superscript.height,
+            self.script.height * .55 + self.subscript.height)
 
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
         self.script.propagate_position(x, y)
         self.superscript.propagate_position(
-            x + self.script.width, y - self.superscript.height * 0.45 * self.scale)
+            x + self.script.width, y - self.superscript.height + 0.55 * self.scale)
         self.subscript.propagate_position(
-            x + self.script.width, y + self.subscript.height * 0.2 * self.scale)
+            x + self.script.width, y + 0.45 * self.scale)
 
     def render(self, fout):
         self.script.render(fout)
@@ -221,7 +222,7 @@ class ParenthesesOp(Operation):
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
-        self.children[0].propagate_position(x + 0.6, y)
+        self.children[0].propagate_position(x + 0.6* self.scale, y)
 
     def render(self, fout):
         fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
@@ -230,7 +231,7 @@ class ParenthesesOp(Operation):
                    ') scale(1,' + str((self.height - self.scale * .4) / self.scale / .6) + ')">(</text>')
         self.children[0].render(fout)
         fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
-                   '" transform="translate(' + str(self.children[0].width + 0.6 * self.scale) +
+                   '" transform="translate(' + str(self.pos_x + self.children[0].width + 0.6 * self.scale) +
                    ',' + str(self.pos_y + self.height * .85) +
                    ') scale(1,' + str((self.height - self.scale * .4) / self.scale / .6) + ')">)</text>')
 
