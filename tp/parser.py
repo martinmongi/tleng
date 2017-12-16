@@ -5,14 +5,8 @@ from lexer import tokens
 
 
 class Operation(object):
-    def render(self, fout, x, y):
+    def render(self, fout):
         raise NotImplementedError('subclass responsibility')
-
-    def how_far_up_should_i_go(self, scale):
-        return scale
-
-    def how_far_down_should_i_go(self, scale):
-        return 1.5 * scale
 
 
 class EmptyLeaf(Operation):
@@ -28,6 +22,9 @@ class EmptyLeaf(Operation):
 
     def propagate_position(self, x, y):
         pass
+
+    def amount_of_divitions_included(self):
+        return 0
 
     def render(self, fout):
         pass
@@ -59,6 +56,9 @@ class CharLeaf(Operation):
                    '" font-size="' + str(self.scale) +
                    '">' + self.value +
                    '</text>\n')
+
+    def amount_of_divitions_included(self):
+        return 0
 
     def __repr__(self):
         return "Leaf" + repr((self.value,
@@ -102,6 +102,9 @@ class ConcatenationOp(Operation):
         self.children[0].render(fout)
         self.children[1].render(fout)
 
+    def amount_of_divitions_included(self):
+        return self.children[0].amount_of_divitions_included() + self.children[1].amount_of_divitions_included()
+
     def __repr__(self):
         return "Concat" + repr((self.value,
                                 self.scale,
@@ -141,12 +144,6 @@ class DivisionOp(Operation):
         self.children[1].propagate_position(
             x + (self.width - self.children[1].width) / 2, down_y)
 
-    def denominator_position_to_propagate(self):
-        return self.children[1].how_far_down_should_i_go(self.scale)
-
-    def numerator_position_to_propagate(self):
-        return self.children[0].how_far_up_should_i_go(self.scale)
-
     def render(self, fout):
         self.children[0].render(fout)
         fout.write('<line x1="' + str(self.pos_x) +
@@ -156,6 +153,9 @@ class DivisionOp(Operation):
                    '" stroke-width="' + str(self.scale * 0.06) +
                    '" stroke="black"/>\n')
         self.children[1].render(fout)
+
+    def amount_of_divitions_included(self):
+        return 1 + self.children[0].amount_of_divitions_included() + self.children[1].amount_of_divitions_included()
 
     def __repr__(self):
         return "Div" + repr((self.value,
@@ -206,12 +206,6 @@ class SuperSubScriptOp(Operation):
 
     def amount_of_divitions_included(self):
         return 0
-
-    def how_far_up_should_i_go(self, scale):
-        return scale * 0.3
-
-    def how_far_down_should_i_go(self, scale):
-        return scale * 0.8
 
     def __repr__(self):
         return "SuperSub" + repr((self.value,
