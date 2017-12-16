@@ -215,6 +215,7 @@ class SuperSubScriptOp(Operation):
 class ParenthesesOp(Operation):
     def __init__(self, child1):
         self.children = [child1]
+        self.value = '('+ child1.value + ')'
         self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
 
     def propagate_scale(self, scale):
@@ -223,13 +224,14 @@ class ParenthesesOp(Operation):
 
     def synthesize_sizes(self):
         self.children[0].synthesize_sizes()
-        self.width = self.children[0].width
+        self.width = 2 + self.children[0].width
+        # fixme: the height is not well calculated
         self.height = self.children[0].height
 
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
-        self.children[0].propagate_position(x, y)
+        self.children[0].propagate_position(x + 1, y)
 
     def render(self, fout):
         fout.write('<text x="' + str(self.pos_x) +
@@ -238,7 +240,7 @@ class ParenthesesOp(Operation):
                    '">' + '(' +
                    '</text>\n')
         self.children[0].render(fout)
-        fout.write('<text x="' + str(self.pos_x + self.children[0].width) +
+        fout.write('<text x="' + str(self.pos_x + self.children[0].width + 1) +
                    '" y="' + str(self.pos_y) +
                    '" font-size="' + str(self.scale) +
                    '">' + ')' +
@@ -248,7 +250,8 @@ class ParenthesesOp(Operation):
         return self.children[0].amount_of_divitions_included()
 
     def __repr__(self):
-        return "Parentheses" + repr((self.scale,
+        return "Parentheses" + repr((self.value,
+                                     self.scale,
                                      self.width,
                                      self.height,
                                      self.pos_x,
@@ -257,7 +260,9 @@ class ParenthesesOp(Operation):
 
     def calculate_parenthesis_scale(self, child):
         amount_of_divitions_included = child.amount_of_divitions_included()
-        return amount_of_divitions_included * 1.7
+        if amount_of_divitions_included == 0:
+            return 1
+        return amount_of_divitions_included * 2
 
 
 # class ParenthesesOp(Operation):
