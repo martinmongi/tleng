@@ -178,8 +178,10 @@ class SuperSubScriptOp(Operation):
         self.width = self.script.width + \
             max(self.superscript.width, self.subscript.width)
 
-        self.height = max(self.script.height * .55 + self.superscript.height,
-            self.script.height * .55 + self.subscript.height)
+        self.height = self.script.height * .55 + max(self.superscript.height, self.subscript.height)
+
+        # ARREGLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR, hay que tomar en cuenta el alto del superscript
+        self.div_line_offset = self.script.div_line_offset
 
     def propagate_position(self, x, y):
         self.pos_x = x
