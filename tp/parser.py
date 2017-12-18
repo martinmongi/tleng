@@ -122,14 +122,14 @@ class DivisionOp(Operation):
         self.children[1].synthesize_sizes()
         self.width = max(self.children[0].width, self.children[1].width)
         self.height = self.children[0].height + \
-            self.children[1].height
-        self.div_line_offset = self.children[0].height + self.scale * .15
+            self.children[1].height + self.scale * .3
+        self.div_line_offset = self.children[0].height + self.scale * .3
 
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
-        up_y = self.pos_y - self.scale * .15
-        down_y = self.pos_y + self.div_line_offset - self.scale * .15
+        up_y = self.pos_y
+        down_y = self.pos_y + self.div_line_offset
         self.children[0].propagate_position(
             x + (self.width - self.children[0].width) / 2, up_y)
         self.children[1].propagate_position(
@@ -178,19 +178,24 @@ class SuperSubScriptOp(Operation):
         self.width = self.script.width + \
             max(self.superscript.width, self.subscript.width)
 
-        self.height = self.script.height * .55 + max(self.superscript.height, self.subscript.height)
+        self.height = max(self.script.height * .5, self.superscript.height) + \
+            self.script.height * .2 + \
+            max(self.script.height * .3, self.subscript.height)
 
-        # ARREGLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR, hay que tomar en cuenta el alto del superscript
-        self.div_line_offset = self.script.div_line_offset
+        self.div_line_offset = self.script.div_line_offset + max(
+            0, self.superscript.height - self.script.height * .5)
+
+        print(self.value, self.height, self.div_line_offset)
 
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
-        self.script.propagate_position(x, y)
+        self.script.propagate_position(x, y + max(
+            0, self.superscript.height - self.script.height * .5))
         self.superscript.propagate_position(
-            x + self.script.width, y - self.superscript.height + 0.55 * self.scale)
+            x + self.script.width, y)
         self.subscript.propagate_position(
-            x + self.script.width, y + 0.45 * self.scale)
+            x + self.script.width, y + self.script.height * .2 + max(self.script.height * .5, self.superscript.height))
 
     def render(self, fout):
         self.script.render(fout)
@@ -224,7 +229,7 @@ class ParenthesesOp(Operation):
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
-        self.children[0].propagate_position(x + 0.6* self.scale, y)
+        self.children[0].propagate_position(x + 0.6 * self.scale, y)
 
     def render(self, fout):
         fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
