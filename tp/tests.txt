@@ -2,5 +2,6 @@ a/b/c/d
 a+{b/c}
 {a/2}+{b/2}
 {a/{b/c}}+{{a/b}/c}
-{({{A^B}{C^D}}/{{{E^{F/a/b/c}_G}+}H})-}I
 {({{A^B}{C^D}}/{{{E^F_G}+}H})-}I
+{({{A^B}{C^D}}/{{{E^{F/X/Y/Z}_G}+}H})-}I
+X-{A/B/C/D/E/F/G/H/I/J/K/L/M/N/O/P/Q/R/S/T/U/V/W/X/Y/Z}+X
