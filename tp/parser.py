@@ -235,12 +235,12 @@ class ParenthesesOp(Operation):
         fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
                    '" transform="translate(' + str(self.pos_x) +
                    ',' + str(self.pos_y + self.height * .85) +
-                   ') scale(1,' + str((self.height - self.scale * .4) / self.scale / .6) + ')">(</text>')
+                   ') scale(1,' + str(self.height / self.scale / .77) + ')">(</text>')
         self.child.render(fout)
         fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
                    '" transform="translate(' + str(self.pos_x + self.child.width + 0.6 * self.scale) +
                    ',' + str(self.pos_y + self.height * .85) +
-                   ') scale(1,' + str((self.height - self.scale * .4) / self.scale / .6) + ')">)</text>')
+                   ') scale(1,' + str(self.height / self.scale / .77) + ')">)</text>')
 
     def __repr__(self):
         return "Parentheses" + repr((self.value,
