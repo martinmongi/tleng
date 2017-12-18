@@ -193,7 +193,8 @@ class SuperSubScriptOp(Operation):
         self.superscript.propagate_position(
             x + self.script.width, y)
         self.subscript.propagate_position(
-            x + self.script.width, y + self.script.height * .2 + max(self.script.height * .5, self.superscript.height))
+            x + self.script.width,
+            y + self.script.height * .2 + max(self.script.height * .5, self.superscript.height))
 
     def render(self, fout):
         self.script.render(fout)
