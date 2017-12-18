@@ -211,34 +211,34 @@ class SuperSubScriptOp(Operation):
 
 
 class ParenthesesOp(Operation):
-    def __init__(self, child1):
-        self.children = [child1]
-        self.value = '(' + child1.value + ')'
+    def __init__(self, child):
+        self.child = child
+        self.value = '(' + child.value + ')'
         self.scale = self.width = self.height = self.pos_x = self.pos_y = -1
 
     def propagate_scale(self, scale):
-        self.children[0].propagate_scale(scale)
+        self.child.propagate_scale(scale)
         self.scale = scale
 
     def synthesize_sizes(self):
-        self.children[0].synthesize_sizes()
-        self.width = self.scale * 1.2 + self.children[0].width
-        self.height = self.children[0].height
-        self.div_line_offset = self.children[0].div_line_offset
+        self.child.synthesize_sizes()
+        self.width = self.scale * 1.2 + self.child.width
+        self.height = self.child.height
+        self.div_line_offset = self.child.div_line_offset
 
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
-        self.children[0].propagate_position(x + 0.6 * self.scale, y)
+        self.child.propagate_position(x + 0.6 * self.scale, y)
 
     def render(self, fout):
         fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
                    '" transform="translate(' + str(self.pos_x) +
                    ',' + str(self.pos_y + self.height * .85) +
                    ') scale(1,' + str((self.height - self.scale * .4) / self.scale / .6) + ')">(</text>')
-        self.children[0].render(fout)
+        self.child.render(fout)
         fout.write('<text x="0" y="0" font-size="' + str(self.scale) +
-                   '" transform="translate(' + str(self.pos_x + self.children[0].width + 0.6 * self.scale) +
+                   '" transform="translate(' + str(self.pos_x + self.child.width + 0.6 * self.scale) +
                    ',' + str(self.pos_y + self.height * .85) +
                    ') scale(1,' + str((self.height - self.scale * .4) / self.scale / .6) + ')">)</text>')
 
@@ -249,7 +249,7 @@ class ParenthesesOp(Operation):
                                      self.height,
                                      self.pos_x,
                                      self.pos_y,
-                                     self.children))
+                                     self.child))
 
 
 start = 'expression'
