@@ -185,8 +185,6 @@ class SuperSubScriptOp(Operation):
         self.div_line_offset = self.script.div_line_offset + max(
             0, self.superscript.height - self.script.height * .5)
 
-        print(self.value, self.height, self.div_line_offset)
-
     def propagate_position(self, x, y):
         self.pos_x = x
         self.pos_y = y
